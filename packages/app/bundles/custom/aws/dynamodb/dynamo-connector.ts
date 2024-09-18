@@ -132,21 +132,43 @@ export class DynamoConnector {
 
     async batchWriteItems(tableName, items) {
         const MAX_BATCH_SIZE = 25; // max batch size allowed by dynamodb
+        const MAX_RETRIES = 5; // Set the maximum number of retries
+
         for (let i = 0; i < items.length; i += MAX_BATCH_SIZE) {
             const batch = items.slice(i, i + MAX_BATCH_SIZE).map(item => ({
                 PutRequest: { Item: item }
             }));
+
             const params = {
                 RequestItems: {
                     [tableName]: batch
                 }
             };
-    
-            try {
-                const result = await this.dynamoDbClient.send(new BatchWriteItemCommand(params));
-                console.log(`Batch write successful:`, result);
-            } catch (error) {
-                console.error(`Error with batch write:`, error);
+
+            let attempt = 0;
+            let success = false;
+
+            while (attempt < MAX_RETRIES && !success) {
+                try {
+                    const result = await this.dynamoDbClient.send(new BatchWriteItemCommand(params));
+                    console.log(`Batch write successful:`, result);
+                    success = true; // Exit loop if successful
+                } catch (error) {
+                    if (error.name === 'ProvisionedThroughputExceededException') {
+                        const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff: wait 2^n seconds
+                        console.error(`ProvisionedThroughputExceededException: Retrying batch in ${waitTime / 1000} seconds...`);
+                        await new Promise(resolve => setTimeout(resolve, waitTime)); // Wait before retrying
+                    } else {
+                        console.error(`Error with batch write:`, error);
+                        // throw error; // Rethrow non-retryable errors
+                    }
+                    attempt++;
+                }
+            }
+
+            if (!success) {
+                console.log(`Failed to write batch after ${MAX_RETRIES} retries.`);
+                // throw new Error(`Failed to write batch after ${MAX_RETRIES} retries.`);
             }
         }
     }
