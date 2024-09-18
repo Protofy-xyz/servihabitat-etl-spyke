@@ -7,6 +7,12 @@
     "*.css"
   ],
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "~3.651.1",
+    "@aws-sdk/client-s3": "~3.651.1",
+    "@aws-sdk/client-sts": "~3.651.1",
+    "@aws-sdk/lib-dynamodb": "~3.651.1",
+    "@aws-sdk/s3-request-presigner": "~3.651.1",
+    "@aws-sdk/util-dynamodb": "~3.651.1",
     "@my/ui": "0.0.1",
     "@react-navigation/native": "^6.1.17",
     "@tamagui/animations-css": "^1.101.7",
