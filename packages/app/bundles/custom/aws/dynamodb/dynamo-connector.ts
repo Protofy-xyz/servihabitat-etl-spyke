@@ -16,6 +16,17 @@ export class DynamoConnector {
     constructor(client) {
         this.dynamoDbClient = client;
     }
+
+    async getTableInfo(tableName: string) {
+        try {
+            // Check if the table exists
+            const describeTableCommand = new DescribeTableCommand({ TableName: tableName });
+            const response = await this.dynamoDbClient.send(describeTableCommand);
+            return response;
+        }catch(e){
+            console.log(`Error describing table ${tableName}. Error: ${e}` );
+        }
+    }
     async initTable(tableName: string) {
         try {
             // Check if the table exists
