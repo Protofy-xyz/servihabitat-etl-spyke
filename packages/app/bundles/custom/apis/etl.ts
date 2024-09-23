@@ -45,13 +45,12 @@ export default Protofy("code", async (app: Application, context: typeof APIConte
         const data = (new ETL(enititymodel, raw_data)).transform();
         // console.log('DATA 3 (No duplicateds ids): length :: ' + data.length);
         // Create Dynamodb table
-        console.log('Getting AWS client for dynamodb...')
         const awsClient = await DynamoConnector.getClient();
         const tableName = `${enititymodel}_test`; // TABLE NAME --> TODO: remove "_test" sufix
+
         const dynamodb = new DynamoConnector(awsClient); // Gets database
         // Create table if no exist
         await dynamodb.initTable(tableName); // FIX? -> add custom indexes for each of models | question: can be created from here or should be previously done by bapis-monorepo
-        console.log('Successfully created table:', tableName);
         // Upload each element to dynamodb
         await dynamodb.batchWriteItems(tableName, data);
         res.send('Successfully ETL data from S3 to DynamoDB');

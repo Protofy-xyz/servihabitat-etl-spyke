@@ -163,7 +163,6 @@ export class DynamoConnector {
             while (attempt < MAX_RETRIES && !success) {
                 try {
                     const result = await this.dynamoDbClient.send(new BatchWriteItemCommand(params));
-                    console.log(`Batch write successful:`, result);
                     success = true; // Exit loop if successful
                 } catch (error) {
                     if (error.name === 'ProvisionedThroughputExceededException') {

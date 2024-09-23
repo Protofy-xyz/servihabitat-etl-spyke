@@ -8,10 +8,11 @@ export class ETL {
     }
 
     transform() {
+        let data;
         switch (this.entityModel) {
             case "promotions":
                 // FIX: Promotions NFQ Data problems
-                const data = this.raw_data?.reduce((total, item) => {
+                data = this.raw_data?.reduce((total, item) => {
                     const itemFoundIndex = total.findIndex((i) => i.id.S === item.id.S); // -1 when not found
                     if (item.hasOwnProperty('id')) {
                         if (itemFoundIndex == -1) { // Add item bc is new item
@@ -24,11 +25,22 @@ export class ETL {
                     }
                     return total
                 }, []);
-                return data
-                break;
+                return data;
+            case "checklists":
+                const sanitize = (_data) => {
+                    const tmpRawData = { ..._data }
+                    Object.keys(_data).forEach((key) => {
+                        const keyValue = tmpRawData[key];
+                        if(key == "status" && keyValue.L == "") {
+                            tmpRawData["status"].L = [];
+                        }
+                    });
+                    return tmpRawData;
+                }
+                data = this.raw_data.map((item) => sanitize(item))
+                return data;
             default:
                 return this.raw_data;
-                break;
         }
     }
 }
