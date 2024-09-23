@@ -23,8 +23,8 @@ export class DynamoConnector {
             const describeTableCommand = new DescribeTableCommand({ TableName: tableName });
             const response = await this.dynamoDbClient.send(describeTableCommand);
             return response;
-        }catch(e){
-            console.log(`Error describing table ${tableName}. Error: ${e}` );
+        } catch (e) {
+            console.log(`Error describing table ${tableName}. Error: ${e}`);
         }
     }
     async initTable(tableName: string) {
@@ -60,7 +60,8 @@ export class DynamoConnector {
                 try {
                     const createTableCommand = new CreateTableCommand(createTableParams as any);
                     await this.dynamoDbClient.send(createTableCommand);
-                    console.log(`Table ${tableName} created successfully.`);
+                    console.log(`Table ${tableName} created successfully. Waiting to become active...`);
+                    await this.waitForTableToBecomeActive(tableName)
                 } catch (createError) {
                     console.error("Error creating table:", createError);
                     throw new Error(createError)
