@@ -23,7 +23,7 @@ export default Protofy("code", async (app: Application, context: typeof APIConte
             const fileNames = {
                 promotions: "PROMOTIONS_20240923030914.JSON",
                 products: "PRODUCTS_20240923030914.JSON",
-                activitys: "",
+                activitys: "ACTIVITYS_20240923030914.JSON",
                 clients: "CLIENTS_20240923030914.JSON",
                 managements: "MANAGEMENTS_20240923030914.JSON",
                 checklists: "CHECKLISTS_20240923030914.JSON"
@@ -39,7 +39,7 @@ export default Protofy("code", async (app: Application, context: typeof APIConte
         // Transform bucket s3 data 
         const filename = getFileName(enititymodel);
         const awsClient = await DynamoConnector.getClient();
-        const tableName = `${enititymodel}_test`; // TABLE NAME --> TODO: remove "_test" sufix
+        const tableName = `${enititymodel}`; 
         const dynamodb = new DynamoConnector(awsClient); // Gets database
         // Create table if no exist
         await dynamodb.initTable(tableName);
