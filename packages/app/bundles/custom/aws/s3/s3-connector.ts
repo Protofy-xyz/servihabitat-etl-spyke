@@ -9,6 +9,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { STSClient, AssumeRoleWithWebIdentityCommand } from "@aws-sdk/client-sts";
 import * as fs from 'fs';
+const readline = require('readline');
 
 const ENABLE_AWS_S3_SANDBOX = process.env?.ENABLE_AWS_S3_SANDBOX;
 const AWS_S3_BUCKET = process.env?.AWS_S3_BUCKET;
@@ -211,7 +212,7 @@ export class S3Bucket {
     }
 
 
-    async readResource(filename: string) {
+    async readResource(filename: string, cb = (batchLines: string[]) => {}, _batchSize = 25) {
         const exists = await this.resourceExists(filename);
         if (!exists) {
             throw new Error('Resource does not exist')
@@ -223,14 +224,28 @@ export class S3Bucket {
 
         try {
             const data = await this.client.send(command);
-            const chunks = [];
-            // Read the stream data
-            for await (const chunk of data.Body) {
-                chunks.push(chunk);
+            if (!data.Body) {
+                throw new Error("No content in the S3 resource");
             }
-            // Concatenate chunks and return the full content as a buffer or string (depending on file type)
-            const fileContent = Buffer.concat(chunks);
-            return fileContent.toString();  // Convert to string if it's text content
+            const s3Stream = data.Body;
+            const rl = readline.createInterface({
+                input: s3Stream,
+                crlfDelay: Infinity, // Recognizes both CRLF and LF as newline characters
+            });
+            let linesBatch = [];
+            const batchSize = _batchSize ?? 25;
+            for await (const line of rl) {
+                linesBatch.push(line);
+                if (linesBatch.length === batchSize) {
+                    await cb(linesBatch);  // Process the batch
+                    linesBatch = [];  // Reset the batch
+                }
+            }
+            // Process any remaining lines if they don't fill the last batch
+            if (linesBatch.length > 0) {
+                await cb(linesBatch);
+            }
+            console.log('File processing completed.');
         } catch (e) {
             throw new Error("Error reading S3 resource. Error: " + e.message);
         }
