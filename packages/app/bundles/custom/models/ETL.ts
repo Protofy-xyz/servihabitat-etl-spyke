@@ -39,6 +39,27 @@ export class ETL {
                 }
                 data = this.raw_data.map((item) => sanitize(item))
                 return data;
+            case "managements":
+                const _sanitize = (_data) => {
+                    const tmpRawData = { ..._data }
+                    Object.keys(_data).forEach((key) => {
+                        const keyValue = tmpRawData[key];
+                        if(key == "clientid") {
+                            tmpRawData["clientId"] = keyValue;
+                            delete tmpRawData["clientid"]
+                        }
+                        if(key == "productid") {
+                            tmpRawData["productId"] = keyValue;
+                            delete tmpRawData["productid"]
+                        }
+                        if(key == "status" && !["in-progress","pending"].includes(keyValue.S)) {
+                            tmpRawData["status"].S = keyValue.S == 'E0004' ? "pending" : "in-progress" // FIX invent, waiting for NFQ data
+                        }
+                    });
+                    return tmpRawData;
+                }
+                data = this.raw_data.map((item) => _sanitize(item))
+                return data;
             default:
                 return this.raw_data;
         }
